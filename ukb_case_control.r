@@ -144,6 +144,10 @@ table(selected_vars$PD_Dx_after_rec)
 print("Printing number of prevalent cases")
 table(selected_vars$PD_status)
 
+# get drug definitions (NSAIDs, CCBs, Beta-blockers)
+#drugs = read_tsv("/data/Wolfson-UKBB-Dobson/PD_pheno/ukb_pheno.tsv")
+#colnames(drugs)[1]="EID"
+#selected_vars = left_join(selected_vars,drugs,by="EID")
 #############################################
 #     Work out basic demographics 
 #############################################
@@ -683,7 +687,42 @@ library(rcompanion)
 library(ROCR)
 library(RNOmni)
 
-selected_vars = selected_vars %>% filter(`Genetic ethnic grouping.0.0`=="Caucasian")
+
+plot_table = selected_vars %>% filter(!is.na(PD_Dx_after_rec))
+
+p = ggplot(plot_table,aes(`Genetic principal components.0.1`,`Genetic principal components.0.2`,fill=factor(PD_Dx_after_rec)))+
+  geom_point(shape=22)+
+  theme_bw()+
+  labs(x="PC1",y="PC2",fill="PD status")
+
+png("pc_plot_before_relatness_and_ancestry_exclusions.png",height=10,width=10,res=1000,units="in")
+p
+dev.off()
+
+
+kin = read_table2("/data/Wolfson-UKBB-Dobson/helper_progs_and_key/ukb43101_rel_s488282.dat")
+exclusion = kin %>% filter(Kinship>0.0884) %>% select(ID1) %>% rename("EID"="ID1") 
+selected_vars = selected_vars %>% filter(`Genetic ethnic grouping.0.0`=="Caucasian") %>% filter(!EID %in% exclusion$EID)
+
+plot_table = selected_vars %>% filter(!is.na(PD_Dx_after_rec))
+p = ggplot(plot_table,aes(`Genetic principal components.0.1`,`Genetic principal components.0.2`,fill=factor(PD_Dx_after_rec)))+
+  geom_point(shape=22)+
+  theme_bw()+
+  labs(x="PC1",y="PC2",fill="PD status")
+
+png("pc_plot_1.png",height=10,width=10,res=1000,units="in")
+p
+dev.off()
+
+p = ggplot(plot_table,aes(`Genetic principal components.0.3`,`Genetic principal components.0.4`,fill=factor(PD_Dx_after_rec)))+
+  geom_point(shape=22)+
+  theme_bw()+
+  labs(x="PC3",y="PC4",fill="PD status")
+
+png("pc_plot_2.png",height=10,width=10,res=1000,units="in")
+p
+dev.off()
+
 
 nagelkerke = c()
 score_prs=function(){
@@ -717,7 +756,46 @@ score_prs=function(){
   nag <<- nagelkerke(prs_model,null_model)
   nagelkerke <<- c(nagelkerke,nag$Pseudo.R.squared.for.model.vs.null[3])
 }
-
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_01/summarised_PRS_results_pval1")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_01/summarised_PRS_results_pval0.8")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_01/summarised_PRS_results_pval0.6")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_01/summarised_PRS_results_pval0.4")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_01/summarised_PRS_results_pval0.2")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_01/summarised_PRS_results_pval0.1")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_01/summarised_PRS_results_pval0.05")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_01/summarised_PRS_results_pval0.005")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_01/summarised_PRS_results_pval0.0005")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_01/summarised_PRS_results_pval0.00005")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_02/summarised_PRS_results_pval1")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_02/summarised_PRS_results_pval0.8")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_02/summarised_PRS_results_pval0.6")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_02/summarised_PRS_results_pval0.4")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_02/summarised_PRS_results_pval0.2")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_02/summarised_PRS_results_pval0.1")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_02/summarised_PRS_results_pval0.05")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_02/summarised_PRS_results_pval0.005")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_02/summarised_PRS_results_pval0.0005")
+score_prs()
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_02/summarised_PRS_results_pval0.00005")
+score_prs()
 prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_04/summarised_PRS_results_pval1")
 score_prs()
 prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_04/summarised_PRS_results_pval0.8")
@@ -786,8 +864,8 @@ score_prs()
 
 
 
-pvals = factor(rep(c(1,0.8,0.6,0.4,0.2,0.1,0.05,0.005, 0.0005, 0.00005),3))
-r2 = factor(c(rep(0.4,10),rep(0.6,10),rep(0.8,10)))
+pvals = factor(rep(c(1,0.8,0.6,0.4,0.2,0.1,0.05,0.005, 0.0005, 0.00005),5))
+r2 = factor(c(rep(0.1,10),rep(0.2,10),rep(0.4,10),rep(0.6,10),rep(0.8,10)))
 nagel = data.frame(nagelkerke,pvals,r2)
 nagel_plot = ggplot(nagel,aes(pvals,nagelkerke,fill=r2))+
   geom_col(position=position_dodge(),col="black")+
@@ -802,7 +880,7 @@ dev.off()
 
 
 #choose best prs based on r2 and read it in
-prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_08/summarised_PRS_results_pval0.005")
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_08/summarised_PRS_results_pval0.00005")
 #prs = read_table2("H:/UKB_PD/r2_08/summarised_PRS_results_pval0.005")
 
 selected_vars = selected_vars %>% select(-contains("prs"))
@@ -863,7 +941,8 @@ prs_model = glm(data=selected_vars,
                   `Genetic principal components.0.4`+
                   baseline_risk+PRS,
                 family=binomial(link="logit"))
-                
+
+library(caret)          
 selected_vars$preds = predict(prs_model,newdata=selected_vars,type="response")
 selected_vars$preds = cut2(selected_vars$preds,g=10)
 levels(selected_vars$preds)=c(1:10)
@@ -928,7 +1007,6 @@ pred$preds = factor(recode(pred$preds,"1"="0","10"="1"),levels=c("0","1"))
 pred$PD_Dx_after_rec=factor(pred$PD_Dx_after_rec,levels=c("0","1"))
 confusionMatrix(pred$preds,pred$PD_Dx_after_rec)
 
-library(caret)
 
 
 summ = cbind(age_sex_pcs_prs_tbl,baseline_tbl,baseline_prs_tbl,baseline_only_tbl)
@@ -965,7 +1043,8 @@ nagelkerke(prs_model,null_model2)
 
 
 
-#additive interaction PRS
+
+#age of onset
 
 hist(selected_vars$age_at_pd_dx)
 summary(selected_vars$age_at_pd_dx)
@@ -988,6 +1067,127 @@ age_plot=ggplot(selected_vars,aes((PRS),age_at_pd_dx))+geom_point()+theme_classi
 png("prs_age_of_dx.png",height=10,width=10,res=1000,units="in")
 age_plot
 dev.off()
+
+#########################################
+# use top prs excluding pd risk loci
+#########################################
+#choose best prs based on r2 and read it in
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/top_prs_excluding_sig_vars/summarised_PRS_results_pval0.0005")
+#prs = read_table2("H:/UKB_PD/r2_08/summarised_PRS_results_pval0.005")
+prs = prs %>% rename("prs_no_top_hits"=PRS)
+selected_vars$EID = as.numeric(as.character(selected_vars$EID))
+selected_vars = selected_vars %>% left_join(prs,by="EID")
+selected_vars$prs_no_top_hits=rankNorm(selected_vars$prs_no_top_hits)
+
+prs_no_top_hits_model = glm(data=selected_vars,
+                PD_Dx_after_rec~`Genetic principal components.0.1`+
+                  `Genetic principal components.0.2`+
+                  `Genetic principal components.0.3`+
+                  `Genetic principal components.0.4`+
+                  baseline_risk+prs_no_top_hits,
+                family=binomial(link="logit"))
+
+library(caret)          
+selected_vars$preds = predict(prs_no_top_hits_model,newdata=selected_vars,type="response")
+selected_vars$preds = cut2(selected_vars$preds,g=10)
+levels(selected_vars$preds)=c(1:10)
+baseline_prs_no_top_hits_tbl = table(selected_vars$preds,selected_vars$PD_Dx_after_rec)
+pred = selected_vars %>% filter(preds %in% c(1,10)) %>% select(PD_Dx_after_rec,preds) 
+pred$preds = factor(recode(pred$preds,"1"="0","10"="1"),levels=c("0","1"))
+pred$PD_Dx_after_rec=factor(pred$PD_Dx_after_rec,levels=c("0","1"))
+confusionMatrix(pred$preds,pred$PD_Dx_after_rec)
+
+
+null_model = glm(data=selected_vars,
+                 PD_Dx_after_rec~`Genetic principal components.0.1`+
+                   `Genetic principal components.0.2`+
+                   `Genetic principal components.0.3`+
+                   `Genetic principal components.0.4`+baseline_risk,
+                 family=binomial(link="logit"))
+selected_vars$preds = predict(null_model,newdata=selected_vars,type="response")
+selected_vars$preds = cut2(selected_vars$preds,g=10)
+levels(selected_vars$preds)=c(1:10)
+baseline_tbl = table(selected_vars$preds,selected_vars$PD_Dx_after_rec)
+
+null_model2 = glm(data=selected_vars,
+                  PD_Dx_after_rec~`Age at recruitment.0.0`+
+                    `Sex.0.0`+
+                    `Genetic principal components.0.1`+
+                    `Genetic principal components.0.2`+
+                    `Genetic principal components.0.3`+
+                    `Genetic principal components.0.4`,
+                  family=binomial(link="logit"))
+selected_vars$preds = predict(null_model2,newdata=selected_vars,type="response")
+selected_vars$preds = cut2(selected_vars$preds,g=10)
+levels(selected_vars$preds)=c(1:10)
+age_sex_pcs_tbl = table(selected_vars$preds,selected_vars$PD_Dx_after_rec)
+
+null_model3 = glm(data=selected_vars,
+                  PD_Dx_after_rec~`Age at recruitment.0.0`+
+                    `Sex.0.0`+
+                    `Genetic principal components.0.1`+
+                    `Genetic principal components.0.2`+
+                    `Genetic principal components.0.3`+
+                    `Genetic principal components.0.4`+prs_no_top_hits,
+                  family=binomial(link="logit"))
+selected_vars$preds = predict(null_model3,newdata=selected_vars,type="response")
+selected_vars$preds = cut2(selected_vars$preds,g=10)
+levels(selected_vars$preds)=c(1:10)
+age_sex_pcs_prs_no_top_hits_tbl = table(selected_vars$preds,selected_vars$PD_Dx_after_rec)
+pred = selected_vars %>% filter(preds %in% c(1,10)) %>% select(PD_Dx_after_rec,preds) 
+pred$preds = factor(recode(pred$preds,"1"="0","10"="1"),levels=c("0","1"))
+pred$PD_Dx_after_rec=factor(pred$PD_Dx_after_rec,levels=c("0","1"))
+confusionMatrix(pred$preds,pred$PD_Dx_after_rec)
+
+
+null_model4 = glm(data=selected_vars,
+                  PD_Dx_after_rec~prs_no_top_hits,
+                  family=binomial(link="logit"))
+selected_vars$preds = predict(null_model4,newdata=selected_vars,type="response")
+selected_vars$preds = cut2(selected_vars$preds,g=10)
+levels(selected_vars$preds)=c(1:10)
+baseline_only_tbl = table(selected_vars$preds,selected_vars$PD_Dx_after_rec)
+pred = selected_vars %>% filter(preds %in% c(1,10)) %>% select(PD_Dx_after_rec,preds) 
+pred$preds = factor(recode(pred$preds,"1"="0","10"="1"),levels=c("0","1"))
+pred$PD_Dx_after_rec=factor(pred$PD_Dx_after_rec,levels=c("0","1"))
+confusionMatrix(pred$preds,pred$PD_Dx_after_rec)
+
+
+
+summ = cbind(age_sex_pcs_prs_no_top_hits_tbl,baseline_tbl,baseline_prs_no_top_hits_tbl,baseline_only_tbl)
+
+age_sex_pcs_prs_no_top_hits = summ[,2]/colSums(summ)[2]*100
+predict_pcs = summ[,4]/colSums(summ)[4]*100
+predict_prs_no_top_hits_pcs = summ[,6]/colSums(summ)[6]*100
+predict_only = summ[,8]/colSums(summ)[8]*100
+
+df = data.frame("decile"=rep(c(1:10),3),
+                "Risk algorithm"=c(rep("Age + Sex + PCs + prs_no_top_hits",10),
+                                   rep("Predict-PD + prs_no_top_hits + PCs",10),
+                                   rep("Predict-PD",10)),
+                "Proportion of incident cases in risk decile"=c(age_sex_pcs_prs_no_top_hits,predict_prs_no_top_hits_pcs,predict_only))
+df$Risk.algorithm = factor(df$Risk.algorithm)
+df$decile = factor(df$decile,order=TRUE)
+p=ggplot(df,aes(decile,Proportion.of.incident.cases.in.risk.decile,fill=Risk.algorithm,group=Risk.algorithm))+
+  geom_line(lwd=0.5,col="black")+
+  geom_point(size=5,shape=22)+
+  scale_fill_brewer(palette="Set2")+
+  theme_classic()+
+  theme(text=element_text(size=16))+
+  labs(x="Risk Decile",y="Proportion of incident cases in risk decile",fill="Risk algorithm",col="Risk algorithm")
+png("predictions_excl_top_hits.png",height=10,width=10,res=1000,units="in")
+p
+dev.off()
+
+
+print("Nagelkerke for prs_no_top_hits + predict vs predict")
+nagelkerke(prs_no_top_hits_model,null_model)
+
+print("printing incident cases")
+table(selected_vars$PD_Dx_after_rec)
+print("printing prevalent cases")
+table(selected_vars$PD_status)
+
 
 
 ########################################
@@ -1137,6 +1337,7 @@ model_low = glm(data=low,
                   `Genetic principal components.0.4`+
                   DM_Dx_pre_rec,
                 family=binomial(link="logit"))
+summary(model_low)
 model_high = glm(data=high,
                 PD_Dx_after_rec~`Age at recruitment.0.0`+
                   `Sex.0.0`+
@@ -1146,7 +1347,7 @@ model_high = glm(data=high,
                   `Genetic principal components.0.4`+
                   DM_Dx_pre_rec,
                 family=binomial(link="logit"))
-
+summary(model_high)
 model_low = glm(data=low,
                 PD_Dx_after_rec~`Age at recruitment.0.0`+
                   `Sex.0.0`+
@@ -1156,6 +1357,7 @@ model_low = glm(data=low,
                   `Genetic principal components.0.4`+
                   alcohol,
                 family=binomial(link="logit"))
+summary(model_low)
 model_high = glm(data=high,
                 PD_Dx_after_rec~`Age at recruitment.0.0`+
                   `Sex.0.0`+
@@ -1165,5 +1367,6 @@ model_high = glm(data=high,
                   `Genetic principal components.0.4`+
                   alcohol,
                 family=binomial(link="logit"))
+summary(model_high)
                 
                 
