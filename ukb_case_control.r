@@ -1,13 +1,16 @@
 #############################################
 #               Load packages 
 #############################################
-
+library(Hmisc)
 library(dplyr)
 library(readr)
 library(ggplot2)
 library(tidyr)
 library(RNOmni)
-
+library(rcompanion)
+library(ROCR)
+library(RNOmni)
+library(caret)
 #############################################
 #               read in data 
 #############################################
@@ -240,6 +243,7 @@ summ3 = rbind(summ1,summ2)
 write.csv(summ3,"supplementary_table_2b_incident.csv")
 table(selected_vars$PD_Dx_after_rec)
 table(selected_vars$PD_Dx_after_rec)
+
 # univariate comparisons
 
 pd=selected_vars %>% filter(PD_Dx_after_rec==1)
@@ -261,7 +265,7 @@ write_csv(pvals,"incident_pvals.csv")
 
 
 #############################################
-#     Build multivariate models 
+#     Build multivariable models 
 #############################################
 smok=glm(data=selected_vars,
          PD_Dx_after_rec~`Ethnic background.0.0`+`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
@@ -604,13 +608,368 @@ multi = data.frame(summary(multivar_model)$coefficients)
 multi$name = rownames(multi)
 write_csv(multi,"multivariate_f.csv")
 
+##########################################
+# sensitivity analyses
+########################################
 
+#############################################
+#     1) remove non-white individuals 
+#############################################
+
+white_only_selected_vars = selected_vars %>% filter(`Ethnic background.0.0`=="White")
+
+smok=glm(data=white_only_selected_vars,
+         PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+           white_only_selected_vars$smoking_status,
+         family=binomial(link="logit"))
+
+pest=glm(data=white_only_selected_vars,
+         PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+           factor(white_only_selected_vars$Pesticides),
+         family=binomial(link="logit"))
+
+alc=glm(data=white_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          factor(white_only_selected_vars$alcohol),
+        family=binomial(link="logit"))
+
+dm=glm(data=white_only_selected_vars,
+       PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+         factor(white_only_selected_vars$DM_Dx_pre_rec),
+       family=binomial(link="logit"))
+
+epi=glm(data=white_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          factor(white_only_selected_vars$epilepsy_Dx_pre_rec),
+        family=binomial(link="logit"))
+        
+sleepiness=glm(data=white_only_selected_vars,
+               PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                 factor(white_only_selected_vars$sleepiness),
+               family=binomial(link="logit"))
+
+bmi=glm(data=white_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          white_only_selected_vars$`Body mass index (BMI).0.0`,
+        family=binomial(link="logit"))
+
+cbmi=glm(data=white_only_selected_vars,
+         PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+           factor(white_only_selected_vars$`Comparative body size at age 10.0.0`),
+         family=binomial(link="logit"))
+
+dep=glm(data=white_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          factor(white_only_selected_vars$depression_Dx_pre_rec),
+        family=binomial(link="logit"))
+
+anx=glm(data=white_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          factor(white_only_selected_vars$Anxiety_Dx_pre_rec),
+        family=binomial(link="logit"))
+
+mig=glm(data=white_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          factor(white_only_selected_vars$migraine_Dx_pre_rec),
+        family=binomial(link="logit"))
+
+constipation=glm(data=white_only_selected_vars,
+                 PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                   factor(white_only_selected_vars$constipation_Dx_pre_rec),
+                 family=binomial(link="logit"))
+
+head_injury=glm(data=white_only_selected_vars,
+                PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                  factor(white_only_selected_vars$head_injury_Dx_pre_rec),
+                family=binomial(link="logit"))
+
+Hypertension=glm(data=white_only_selected_vars,
+                 PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                   factor(white_only_selected_vars$Hypertension_Dx_pre_rec),
+                 family=binomial(link="logit"))
+
+Gastric_ulcer=glm(data=white_only_selected_vars,
+                  PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                    factor(white_only_selected_vars$Gastric_ulcer_Dx_pre_rec),
+                  family=binomial(link="logit"))
+
+PD_FHx=glm(data=white_only_selected_vars,
+           PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+             factor(white_only_selected_vars$PD_FHx),
+           family=binomial(link="logit"))
+
+Dementia_FHx=glm(data=white_only_selected_vars,
+                 PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                   factor(white_only_selected_vars$Dementia_FHx),
+                 family=binomial(link="logit"))
+
+Depression_FHx=glm(data=white_only_selected_vars,
+                   PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                     factor(white_only_selected_vars$Depression_FHx),
+                   family=binomial(link="logit"))
+
+Diabetes_FHx=glm(data=white_only_selected_vars,
+                 PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                   factor(white_only_selected_vars$Diabetes_FHx),
+                 family=binomial(link="logit"))
+
+Stroke_FHx=glm(data=white_only_selected_vars,
+               PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                 factor(white_only_selected_vars$Stroke_FHx),
+               family=binomial(link="logit"))
+
+breastfed=glm(data=white_only_selected_vars,
+              PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                white_only_selected_vars$`Breastfed as a baby.0.0`,
+              family=binomial(link="logit"))
+
+mat_smok=glm(data=white_only_selected_vars,
+             PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+               white_only_selected_vars$`Maternal smoking around birth.0.0`,
+             family=binomial(link="logit"))
+
+handedness=glm(data=white_only_selected_vars,
+               PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                 white_only_selected_vars$handedness,
+               family=binomial(link="logit"))
+
+menarche=glm(data=white_only_selected_vars,
+             PD_Dx_after_rec~`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+               white_only_selected_vars$`Age when periods started (menarche).0.0`,
+             family=binomial(link="logit"))
+
+voicebreak=glm(data=white_only_selected_vars,
+               PD_Dx_after_rec~`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                 white_only_selected_vars$`Relative age voice broke.0.0`,
+               family=binomial(link="logit"))
+
+coffee=glm(data=white_only_selected_vars,
+           PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+             white_only_selected_vars$`Coffee intake.0.0`,
+           family=binomial(link="logit"))
+
+edu=glm(data=white_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+white_only_selected_vars$`Age completed full time education.0.0`,
+        family=binomial(link="logit"))
+
+df=data.frame(rbind(summary(Diabetes_FHx)$coefficients,
+                    summary(Stroke_FHx)$coefficients,
+                    summary(Dementia_FHx)$coefficients,
+                    summary(Depression_FHx)$coefficients,
+                    summary(PD_FHx)$coefficients,
+                    summary(head_injury)$coefficients,
+                    summary(Hypertension)$coefficients,
+                    summary(mig)$coefficients,
+                    summary(anx)$coefficients,
+                    summary(dep)$coefficients,
+                    summary(epi)$coefficients,
+                    summary(dm)$coefficients,
+                    summary(Gastric_ulcer)$coefficients,
+                    summary(sleepiness)$coefficients,
+                    summary(constipation)$coefficients,
+                    summary(cbmi)$coefficients,
+                    summary(bmi)$coefficients,
+                    summary(alc)$coefficients,
+                    summary(pest)$coefficients,
+                    summary(smok)$coefficients,
+                    summary(voicebreak)$coefficients,
+                    summary(menarche)$coefficients,
+                    summary(handedness)$coefficients,
+                    summary(breastfed)$coefficients,
+                    summary(mat_smok)$coefficients,
+                    summary(coffee)$coefficients,
+                    summary(edu)$coefficients))
+
+df$name=rownames(df)
+df=df[order(df$name),]
+
+write_csv(df,"white_people_only_incident_case_control.csv")
+
+#############################################
+#     2) remove non-white individuals 
+#############################################
+
+nonwhite_only_selected_vars = selected_vars %>% filter(`Ethnic background.0.0`=="Non-white")
+
+smok=glm(data=nonwhite_only_selected_vars,
+         PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+           nonwhite_only_selected_vars$smoking_status,
+         family=binomial(link="logit"))
+
+pest=glm(data=nonwhite_only_selected_vars,
+         PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+           factor(nonwhite_only_selected_vars$Pesticides),
+         family=binomial(link="logit"))
+
+alc=glm(data=nonwhite_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          factor(nonwhite_only_selected_vars$alcohol),
+        family=binomial(link="logit"))
+
+dm=glm(data=nonwhite_only_selected_vars,
+       PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+         factor(nonwhite_only_selected_vars$DM_Dx_pre_rec),
+       family=binomial(link="logit"))
+
+epi=glm(data=nonwhite_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          factor(nonwhite_only_selected_vars$epilepsy_Dx_pre_rec),
+        family=binomial(link="logit"))
+        
+sleepiness=glm(data=nonwhite_only_selected_vars,
+               PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                 factor(nonwhite_only_selected_vars$sleepiness),
+               family=binomial(link="logit"))
+
+bmi=glm(data=nonwhite_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          nonwhite_only_selected_vars$`Body mass index (BMI).0.0`,
+        family=binomial(link="logit"))
+
+cbmi=glm(data=nonwhite_only_selected_vars,
+         PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+           factor(nonwhite_only_selected_vars$`Comparative body size at age 10.0.0`),
+         family=binomial(link="logit"))
+
+dep=glm(data=nonwhite_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          factor(nonwhite_only_selected_vars$depression_Dx_pre_rec),
+        family=binomial(link="logit"))
+
+anx=glm(data=nonwhite_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          factor(nonwhite_only_selected_vars$Anxiety_Dx_pre_rec),
+        family=binomial(link="logit"))
+
+mig=glm(data=nonwhite_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+          factor(nonwhite_only_selected_vars$migraine_Dx_pre_rec),
+        family=binomial(link="logit"))
+
+constipation=glm(data=nonwhite_only_selected_vars,
+                 PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                   factor(nonwhite_only_selected_vars$constipation_Dx_pre_rec),
+                 family=binomial(link="logit"))
+
+head_injury=glm(data=nonwhite_only_selected_vars,
+                PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                  factor(nonwhite_only_selected_vars$head_injury_Dx_pre_rec),
+                family=binomial(link="logit"))
+
+Hypertension=glm(data=nonwhite_only_selected_vars,
+                 PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                   factor(nonwhite_only_selected_vars$Hypertension_Dx_pre_rec),
+                 family=binomial(link="logit"))
+
+Gastric_ulcer=glm(data=nonwhite_only_selected_vars,
+                  PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                    factor(nonwhite_only_selected_vars$Gastric_ulcer_Dx_pre_rec),
+                  family=binomial(link="logit"))
+
+PD_FHx=glm(data=nonwhite_only_selected_vars,
+           PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+             factor(nonwhite_only_selected_vars$PD_FHx),
+           family=binomial(link="logit"))
+
+Dementia_FHx=glm(data=nonwhite_only_selected_vars,
+                 PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                   factor(nonwhite_only_selected_vars$Dementia_FHx),
+                 family=binomial(link="logit"))
+
+Depression_FHx=glm(data=nonwhite_only_selected_vars,
+                   PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                     factor(nonwhite_only_selected_vars$Depression_FHx),
+                   family=binomial(link="logit"))
+
+Diabetes_FHx=glm(data=nonwhite_only_selected_vars,
+                 PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                   factor(nonwhite_only_selected_vars$Diabetes_FHx),
+                 family=binomial(link="logit"))
+
+Stroke_FHx=glm(data=nonwhite_only_selected_vars,
+               PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                 factor(nonwhite_only_selected_vars$Stroke_FHx),
+               family=binomial(link="logit"))
+
+breastfed=glm(data=nonwhite_only_selected_vars,
+              PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                nonwhite_only_selected_vars$`Breastfed as a baby.0.0`,
+              family=binomial(link="logit"))
+
+mat_smok=glm(data=nonwhite_only_selected_vars,
+             PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+               nonwhite_only_selected_vars$`Maternal smoking around birth.0.0`,
+             family=binomial(link="logit"))
+
+handedness=glm(data=nonwhite_only_selected_vars,
+               PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                 nonwhite_only_selected_vars$handedness,
+               family=binomial(link="logit"))
+
+menarche=glm(data=nonwhite_only_selected_vars,
+             PD_Dx_after_rec~`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+               nonwhite_only_selected_vars$`Age when periods started (menarche).0.0`,
+             family=binomial(link="logit"))
+
+voicebreak=glm(data=nonwhite_only_selected_vars,
+               PD_Dx_after_rec~`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+                 nonwhite_only_selected_vars$`Relative age voice broke.0.0`,
+               family=binomial(link="logit"))
+
+coffee=glm(data=nonwhite_only_selected_vars,
+           PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+
+             nonwhite_only_selected_vars$`Coffee intake.0.0`,
+           family=binomial(link="logit"))
+
+edu=glm(data=nonwhite_only_selected_vars,
+        PD_Dx_after_rec~`Sex.0.0`+`Age at recruitment.0.0`+`Townsend deprivation index at recruitment.0.0`+nonwhite_only_selected_vars$`Age completed full time education.0.0`,
+        family=binomial(link="logit"))
+
+df=data.frame(rbind(summary(Diabetes_FHx)$coefficients,
+                    summary(Stroke_FHx)$coefficients,
+                    summary(Dementia_FHx)$coefficients,
+                    summary(Depression_FHx)$coefficients,
+                    summary(PD_FHx)$coefficients,
+                    summary(head_injury)$coefficients,
+                    summary(Hypertension)$coefficients,
+                    summary(mig)$coefficients,
+                    summary(anx)$coefficients,
+                    summary(dep)$coefficients,
+                    summary(epi)$coefficients,
+                    summary(dm)$coefficients,
+                    summary(Gastric_ulcer)$coefficients,
+                    summary(sleepiness)$coefficients,
+                    summary(constipation)$coefficients,
+                    summary(cbmi)$coefficients,
+                    summary(bmi)$coefficients,
+                    summary(alc)$coefficients,
+                    summary(pest)$coefficients,
+                    summary(smok)$coefficients,
+                    summary(voicebreak)$coefficients,
+                    summary(menarche)$coefficients,
+                    summary(handedness)$coefficients,
+                    summary(breastfed)$coefficients,
+                    summary(mat_smok)$coefficients,
+                    summary(coffee)$coefficients,
+                    summary(edu)$coefficients))
+df$name=rownames(df)
+df=df[order(df$name),]
+write_csv(df,"nonwhite_people_only_incident_case_control.csv")
 
 
 
 ########################################
 # apply predict algo
 ########################################
+
+
+erectile_dysfunction = selected_vars %>% filter(Erectile_dysfunction_status==1 & age_at_Erectile_dysfunction_diagnosis <=`Age at recruitment.0.0`) %>% mutate("Erectile_dysfunction_status_pre_dx"=1)
+no_erectile_dysfunction = selected_vars %>% filter(!EID %in% erectile_dysfunction$EID) %>% mutate("Erectile_dysfunction_status_pre_dx"=0)
+selected_vars = bind_rows(no_erectile_dysfunction,erectile_dysfunction)
+
+
+
+
 
 selected_vars$baseline_risk=1/(1+28.53049+73.67057*exp(-0.165308*(selected_vars$`Age at recruitment.0.0`-60)))
 # adjust for sex
@@ -629,7 +988,7 @@ selected_vars=selected_vars %>%
 selected_vars=selected_vars %>% 
   filter(`Smoking status.0.0`=="Never"))
 
-selected_vars=bind_rows(selected_vars %>% 
+selected_vars=bind_rows(selected_vars %>%
   filter(PD_FHx=="1") %>%
   mutate("baseline_risk"=baseline_risk*4.45),
 selected_vars %>% 
@@ -647,33 +1006,36 @@ selected_vars=bind_rows(selected_vars %>%
                           filter(alcohol=="Less than once a week"))
 
 selected_vars=bind_rows(selected_vars %>% 
-                          filter(Constipation_status=="1") %>%
+                          filter(constipation_Dx_pre_rec=="1") %>%
                           mutate("baseline_risk"=baseline_risk*2.34),
                         selected_vars %>% 
-                          filter(Constipation_status=="0"))
+                          filter(constipation_Dx_pre_rec=="0"))
 selected_vars=bind_rows(selected_vars %>% 
-                          filter(Depression=="1"|Anxiety=="1") %>%
+                          filter(depression_Dx_pre_rec=="1"|Anxiety_Dx_pre_rec=="1") %>%
                           mutate("baseline_risk"=baseline_risk*1.86),
                         selected_vars %>% 
-                          filter(Depression=="0"&Anxiety=="0"))
+                          filter(depression_Dx_pre_rec=="0"&Anxiety_Dx_pre_rec=="0"))
 
 selected_vars=bind_rows(selected_vars %>% 
-                          filter(Erectile_dysfunction_status=="1") %>%
+                          filter(Erectile_dysfunction_status_pre_dx=="1") %>%
                           mutate("baseline_risk"=baseline_risk*3.8),
                         selected_vars %>% 
-                          filter(Erectile_dysfunction_status=="0"))
+                          filter(Erectile_dysfunction_status_pre_dx=="0"))
 
+
+# that's the baseline odds of PD
+# now we'll work out probability
 selected_vars = selected_vars %>% mutate("predict_baseline_prob"=baseline_risk/(1+baseline_risk))
 print("Printing baseline prob of PD among incident cases")
 selected_vars %>% group_by(PD_Dx_after_rec) %>%
-  summarise("Risk PD"=mean(predict_baseline_prob,na.rm=TRUE),
-            "Risk PD SD"=sd(predict_baseline_prob,na.rm=TRUE))
+  summarise("Risk PD"=median(predict_baseline_prob,na.rm=TRUE),
+            "Risk PD SD"=IQR(predict_baseline_prob,na.rm=TRUE))
 
 
-p=ggplot(selected_vars[!is.na(selected_vars$PD_Dx_after_rec),],aes((predict_baseline_prob),fill=factor(PD_Dx_after_rec)))+
+p=ggplot(selected_vars[!is.na(selected_vars$PD_Dx_after_rec),],aes((predict_baseline_prob*100),fill=factor(PD_Dx_after_rec)))+
   geom_density(size=0.1,alpha=0.2)+
   theme_classic()+
-  labs(x="Predicted probability of PD", fill="Case/control status")+
+  labs(x="Predicted probability of PD (%)", fill="Case/control status")+
   scale_x_log10()+
   theme(text=element_text(size=16))
 
@@ -682,12 +1044,16 @@ p
 dev.off()
 
 
+predict_model = glm(data=selected_vars,PD_Dx_after_rec ~ log(baseline_risk),family=binomial(link="logit"))
+# printing model fit incident PD ~ predict
+summary(predict_model)
+# nagel
+nagelkerke(predict_model)
+null_model = glm(data=selected_vars,PD_Dx_after_rec ~ `Age at recruitment.0.0`+Sex.0.0,family=binomial(link="logit"))
+# nagel vs null of age + sex
+nagelkerke(predict_model,null_model)
+
 #prs
-library(rcompanion)
-library(ROCR)
-library(RNOmni)
-
-
 plot_table = selected_vars %>% filter(!is.na(PD_Dx_after_rec))
 
 p = ggplot(plot_table,aes(`Genetic principal components.0.1`,`Genetic principal components.0.2`,fill=factor(PD_Dx_after_rec)))+
@@ -699,9 +1065,9 @@ png("pc_plot_before_relatness_and_ancestry_exclusions.png",height=10,width=10,re
 p
 dev.off()
 
-
+# exclude related people
 kin = read_table2("/data/Wolfson-UKBB-Dobson/helper_progs_and_key/ukb43101_rel_s488282.dat")
-exclusion = kin %>% filter(Kinship>0.0884) %>% select(ID1) %>% rename("EID"="ID1") 
+exclusion = kin %>% filter(Kinship>0.0442) %>% select(ID1) %>% rename("EID"="ID1") 
 selected_vars = selected_vars %>% filter(`Genetic ethnic grouping.0.0`=="Caucasian") %>% filter(!EID %in% exclusion$EID)
 
 plot_table = selected_vars %>% filter(!is.na(PD_Dx_after_rec))
@@ -723,7 +1089,9 @@ png("pc_plot_2.png",height=10,width=10,res=1000,units="in")
 p
 dev.off()
 
-
+######################################
+# prs
+######################################
 nagelkerke = c()
 score_prs=function(){
   selected_vars = selected_vars %>% select(-contains("prs"))
@@ -879,8 +1247,9 @@ nagel_plot
 dev.off()
 
 
+
 #choose best prs based on r2 and read it in
-prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_08/summarised_PRS_results_pval0.00005")
+prs = read_table2("/data/Wolfson-UKBB-Dobson/pd_prs/r2_08/summarised_PRS_results_pval0.0005")
 #prs = read_table2("H:/UKB_PD/r2_08/summarised_PRS_results_pval0.005")
 
 selected_vars = selected_vars %>% select(-contains("prs"))
@@ -889,7 +1258,12 @@ selected_vars = selected_vars %>% left_join(prs,by="EID")
 selected_vars = selected_vars %>% filter(!(is.na(PRS)))
 selected_vars$PRS=rankNorm(selected_vars$PRS)
   
-library(Hmisc)
+# save progress
+write_tsv(selected_vars,"processed_pheno_file.tsv")
+#selected_vars = read_tsv("processed_pheno_file.tsv")
+
+
+# prs decile plot
 selected_vars$prs_decile = cut2(selected_vars$PRS,g=10)
 prs_model = glm(data=selected_vars,
                 PD_status~`Age at recruitment.0.0`+
@@ -906,12 +1280,9 @@ tbl$or=exp(tbl$Estimate)
 tbl$lower_ci=exp(tbl$Estimate-1.96*tbl$Std..Error)
 tbl$upper_ci=exp(tbl$Estimate+1.96*tbl$Std..Error)
 
-
-
 prs_decile_plot=ggplot(tbl,aes(decile,or,fill=or))+
   geom_errorbar(aes(x=decile,ymin=lower_ci,ymax=upper_ci,width=0.2))+
   geom_point(size=5,shape=22)+
-  scale_fill_continuous(type="viridis")+
   theme_classic()+
   theme(legend.position="none",text=element_text(size=16))+
   labs(x="PRS Decile",y="OR for PD (vs lowest decile)")
@@ -922,6 +1293,107 @@ means = selected_vars %>% group_by(PD_status) %>%
 png("decile_plot.png",height=10,width=10,res=1000,units="in")
 prs_decile_plot
 dev.off()
+
+
+count_tbl = table(selected_vars$prs_decile,selected_vars$PD_Dx_after_rec)
+count_tbl = data.frame(cbind(count_tbl,count_tbl[,2]/(count_tbl[,1]+count_tbl[,2])))
+write_csv(count_tbl,"counts_in_each_decile.csv")
+
+# calibration
+
+abs_prs_model = glm(data=selected_vars,
+                PD_Dx_after_rec~`Age at recruitment.0.0`+
+                  `Sex.0.0`+
+                  `Genetic principal components.0.1`+
+                  `Genetic principal components.0.2`+
+                  `Genetic principal components.0.3`+
+                  `Genetic principal components.0.4`+
+                  PRS,
+                family=binomial(link="logit"))
+null_prs_model = glm(data=selected_vars,
+                PD_Dx_after_rec~`Age at recruitment.0.0`+
+                  `Sex.0.0`+
+                  `Genetic principal components.0.1`+
+                  `Genetic principal components.0.2`+
+                  `Genetic principal components.0.3`+
+                  `Genetic principal components.0.4`,
+                family=binomial(link="logit"))
+
+agesex_null_prs_model = glm(data=selected_vars,
+                PD_Dx_after_rec~`Age at recruitment.0.0`+
+                  `Sex.0.0`,
+                family=binomial(link="logit"))
+
+prs_predict_model = glm(data=selected_vars,
+                PD_Dx_after_rec~`Genetic principal components.0.1`+
+                  `Genetic principal components.0.2`+
+                  `Genetic principal components.0.3`+
+                  `Genetic principal components.0.4`+
+                  PRS+
+                  log(baseline_risk),
+                family=binomial(link="logit"))
+
+predict_model = glm(data=selected_vars,
+                PD_Dx_after_rec~`Genetic principal components.0.1`+
+                  `Genetic principal components.0.2`+
+                  `Genetic principal components.0.3`+
+                  `Genetic principal components.0.4`+
+                  log(baseline_risk),
+                family=binomial(link="logit"))
+
+predictions = predict(abs_prs_model,newdata=selected_vars,type="response")
+null_predictions = predict(null_prs_model,newdata=selected_vars,type="response")
+agesex_null_predictions = predict(agesex_null_prs_model,newdata=selected_vars,type="response")
+predict_predictions = predict(predict_model,newdata=selected_vars,type="response")
+prs_predict_predictions = predict(prs_predict_model,newdata=selected_vars,type="response")
+
+preds = data.frame(predictions,null_predictions,predict_predictions,prs_predict_predictions,selected_vars$prs_decile,selected_vars$PD_Dx_after_rec)
+
+preds = preds %>% group_by(selected_vars.prs_decile) %>% summarise(mean(predictions),mean(null_predictions),mean(predict_predictions),mean(prs_predict_predictions))
+tbl = table(selected_vars$prs_decile,selected_vars$PD_Dx_after_rec)
+obs_risk = tbl[,2]/rowSums(tbl)
+
+pred_df = data.frame(preds,obs_risk)
+pred_df$selected_vars.prs_decile = c(1:10)
+library(reshape2)
+pred_df = melt(pred_df,id="selected_vars.prs_decile")
+
+pred_df$selected_vars.prs_decile = factor(pred_df$selected_vars.prs_decile)
+calib_plot = ggplot(pred_df,aes(selected_vars.prs_decile,value,col=variable,group=variable))+geom_point()+geom_line()+labs(x="PRS decile",y="PD risk (probability scale)")+scale_color_brewer(palette="Set2")+theme_classic()
+
+png("/data/Wolfson-UKBB-Dobson/PD_pheno/calibration_plot.png",height=10,width=10,res=1000,units="in")
+calib_plot
+dev.off()
+
+
+preds = data.frame(predictions,null_predictions,agesex_null_predictions,predict_predictions,prs_predict_predictions,selected_vars$PD_Dx_after_rec)
+preds =preds %>% filter(!is.na(selected_vars.PD_Dx_after_rec))
+predictions = ROCR::prediction(list(preds$predictions,preds$null_predictions,preds$agesex_null_predictions,preds$predict_predictions,preds$prs_predict_predictions),list(factor(preds$selected_vars.PD_Dx_after_rec),factor(preds$selected_vars.PD_Dx_after_rec),factor(preds$selected_vars.PD_Dx_after_rec),factor(preds$selected_vars.PD_Dx_after_rec),factor(preds$selected_vars.PD_Dx_after_rec)))
+roc.perf = performance(predictions, measure = "tpr", x.measure = "fpr")
+
+# predictions
+# null
+# agesex_null
+# predict_pred
+# prs_pred
+full_model = data.frame(x=roc.perf@x.values[[1]],y=roc.perf@y.values[[1]],model="full_model")
+null_model = data.frame(x=roc.perf@x.values[[2]],y=roc.perf@y.values[[2]],model="null_model")
+agesex_null_model = data.frame(x=roc.perf@x.values[[3]],y=roc.perf@y.values[[3]],model="agesex_null_model")
+predict_model = data.frame(x=roc.perf@x.values[[4]],y=roc.perf@y.values[[4]],model="predict_model")
+predict_prs_model = data.frame(x=roc.perf@x.values[[5]],y=roc.perf@y.values[[5]],model="predict_prs_model")
+
+
+df = bind_rows(full_model,null_model,agesex_null_model,predict_model,predict_prs_model)
+
+
+png("/data/Wolfson-UKBB-Dobson/PD_pheno/discrimination_plot.png",height=10,width=10,res=1000,units="in")
+ggplot(df,aes(x,y,col=model))+geom_line()+scale_color_brewer(palette="Set2")+labs(x="False Positive Rate",y="True Positive Rate",col="Model")+theme_classic()+geom_abline()
+dev.off()
+
+auc.perf = performance(predictions, measure = "auc")
+auc.perf@y.values
+
+
 
 hist = ggplot(selected_vars,aes(PRS,fill=PD_status))+
   geom_density(alpha=0.5)+
@@ -934,12 +1406,15 @@ png("prs_histo.png",height=10,width=10,res=1000,units="in")
 hist
 dev.off()
 
+
+
+# does prs improve predict fit
 prs_model = glm(data=selected_vars,
                 PD_Dx_after_rec~`Genetic principal components.0.1`+
                   `Genetic principal components.0.2`+
                   `Genetic principal components.0.3`+
                   `Genetic principal components.0.4`+
-                  baseline_risk+PRS,
+                  log(baseline_risk)+PRS,
                 family=binomial(link="logit"))
 
 library(caret)          
@@ -957,7 +1432,7 @@ null_model = glm(data=selected_vars,
                  PD_Dx_after_rec~`Genetic principal components.0.1`+
                   `Genetic principal components.0.2`+
                   `Genetic principal components.0.3`+
-                  `Genetic principal components.0.4`+baseline_risk,
+                  `Genetic principal components.0.4`+log(baseline_risk),
                 family=binomial(link="logit"))
 selected_vars$preds = predict(null_model,newdata=selected_vars,type="response")
 selected_vars$preds = cut2(selected_vars$preds,g=10)
@@ -1197,6 +1672,7 @@ table(selected_vars$PD_status)
 pdfhx_model = glm(data=selected_vars,
                      PD_Dx_after_rec~+`Age at recruitment.0.0`+
                        `Sex.0.0`+
+                       `Townsend deprivation index at recruitment.0.0`+
                        `Genetic principal components.0.1`+
                        `Genetic principal components.0.2`+
                        `Genetic principal components.0.3`+
@@ -1204,11 +1680,12 @@ pdfhx_model = glm(data=selected_vars,
                        factor(selected_vars$PD_FHx)*PRS,
                      family=binomial(link="logit"))
 
-lr_df = data.frame('Exposure'="PD FHx","P-value"=anova(pdfhx_model,test="Chisq")$`Pr(>Chi)`[10],"Beta"=as.numeric(coef(pdfhx_model))[10])
+lr_df = data.frame('Exposure'="PD FHx","P-value"=anova(pdfhx_model,test="Chisq")$`Pr(>Chi)`[11],"Beta"=as.numeric(coef(pdfhx_model))[11])
 
 alc_model = glm(data=selected_vars,
                   PD_Dx_after_rec~+`Age at recruitment.0.0`+
                     `Sex.0.0`+
+                     `Townsend deprivation index at recruitment.0.0`+
                     `Genetic principal components.0.1`+
                     `Genetic principal components.0.2`+
                     `Genetic principal components.0.3`+
@@ -1218,12 +1695,13 @@ alc_model = glm(data=selected_vars,
 
 lr_df = rbind(lr_df,
 data.frame('Exposure'="Alcohol",
-"P-value"=anova(alc_model,test="Chisq")$`Pr(>Chi)`[10],
-"Beta"=as.numeric(coef(alc_model))[10]))
+"P-value"=anova(alc_model,test="Chisq")$`Pr(>Chi)`[11],
+"Beta"=as.numeric(coef(alc_model))[11]))
 
 dep_model = glm(data=selected_vars,
                 PD_Dx_after_rec~+`Age at recruitment.0.0`+
                   `Sex.0.0`+
+                   `Townsend deprivation index at recruitment.0.0`+
                   `Genetic principal components.0.1`+
                   `Genetic principal components.0.2`+
                   `Genetic principal components.0.3`+
@@ -1231,11 +1709,12 @@ dep_model = glm(data=selected_vars,
                   factor(selected_vars$depression_Dx_pre_rec)*PRS,
                 family=binomial(link="logit"))
 
-lr_df = rbind(lr_df,data.frame('Exposure'="Depression","P-value"=anova(dep_model,test="Chisq")$`Pr(>Chi)`[10],"Beta"=as.numeric(coef(dep_model))[10]))
+lr_df = rbind(lr_df,data.frame('Exposure'="Depression","P-value"=anova(dep_model,test="Chisq")$`Pr(>Chi)`[11],"Beta"=as.numeric(coef(dep_model))[11]))
 
 sleep_model = glm(data=selected_vars,
                 PD_Dx_after_rec~+`Age at recruitment.0.0`+
                   `Sex.0.0`+
+                   `Townsend deprivation index at recruitment.0.0`+
                   `Genetic principal components.0.1`+
                   `Genetic principal components.0.2`+
                   `Genetic principal components.0.3`+
@@ -1243,11 +1722,12 @@ sleep_model = glm(data=selected_vars,
                   sleepiness*PRS,
                 family=binomial(link="logit"))
 
-lr_df = rbind(lr_df,data.frame('Exposure'="Sleepiness","P-value"=anova(sleep_model,test="Chisq")$`Pr(>Chi)`[10],"Beta"=as.numeric(coef(sleep_model))[10]))
+lr_df = rbind(lr_df,data.frame('Exposure'="Sleepiness","P-value"=anova(sleep_model,test="Chisq")$`Pr(>Chi)`[11],"Beta"=as.numeric(coef(sleep_model))[11]))
 
 epi_model = glm(data=selected_vars,
                   PD_Dx_after_rec~+`Age at recruitment.0.0`+
                     `Sex.0.0`+
+                     `Townsend deprivation index at recruitment.0.0`+
                     `Genetic principal components.0.1`+
                     `Genetic principal components.0.2`+
                     `Genetic principal components.0.3`+
@@ -1255,56 +1735,61 @@ epi_model = glm(data=selected_vars,
                   factor(epilepsy_Dx_pre_rec)*PRS,
                   family=binomial(link="logit"))
 
-lr_df = rbind(lr_df,data.frame('Exposure'="Epilepsy","P-value"=anova(epi_model,test="Chisq")$`Pr(>Chi)`[10],"Beta"=as.numeric(coef(epi_model))[10]))
+lr_df = rbind(lr_df,data.frame('Exposure'="Epilepsy","P-value"=anova(epi_model,test="Chisq")$`Pr(>Chi)`[11],"Beta"=as.numeric(coef(epi_model))[11]))
 
 selected_vars$smoking_status=recode(selected_vars$smoking_status,"Previous"="Ever","Current"="Ever","Never"="Never")
 
 smok_model = glm(data=selected_vars,
                 PD_Dx_after_rec~+`Age at recruitment.0.0`+
                   `Sex.0.0`+
+                   `Townsend deprivation index at recruitment.0.0`+
                   `Genetic principal components.0.1`+
                   `Genetic principal components.0.2`+
                   `Genetic principal components.0.3`+
                   `Genetic principal components.0.4`+
                   smoking_status*PRS,
                 family=binomial(link="logit"))
-lr_df = rbind(lr_df,data.frame('Exposure'="Smoking status","P-value"=anova(smok_model,test="Chisq")$`Pr(>Chi)`[10],"Beta"=as.numeric(coef(smok_model))[10]))
+lr_df = rbind(lr_df,data.frame('Exposure'="Smoking status","P-value"=anova(smok_model,test="Chisq")$`Pr(>Chi)`[11],"Beta"=as.numeric(coef(smok_model))[11]))
 
 dementia_model = glm(data=selected_vars,
                  PD_Dx_after_rec~+`Age at recruitment.0.0`+
                    `Sex.0.0`+
+                    `Townsend deprivation index at recruitment.0.0`+
                    `Genetic principal components.0.1`+
                    `Genetic principal components.0.2`+
                    `Genetic principal components.0.3`+
                    `Genetic principal components.0.4`+
                    factor(selected_vars$Dementia_FHx)*PRS,
                  family=binomial(link="logit"))
-lr_df = rbind(lr_df,data.frame('Exposure'="Dementia FHx status","P-value"=anova(dementia_model,test="Chisq")$`Pr(>Chi)`[10],"Beta"=as.numeric(coef(dementia_model))[10]))
+lr_df = rbind(lr_df,data.frame('Exposure'="Dementia FHx status","P-value"=anova(dementia_model,test="Chisq")$`Pr(>Chi)`[11],"Beta"=as.numeric(coef(dementia_model))[11]))
 
 dm_model = glm(data=selected_vars,
                  PD_Dx_after_rec~+`Age at recruitment.0.0`+
                    `Sex.0.0`+
+                    `Townsend deprivation index at recruitment.0.0`+
                    `Genetic principal components.0.1`+
                    `Genetic principal components.0.2`+
                    `Genetic principal components.0.3`+
                    `Genetic principal components.0.4`+
                    factor(selected_vars$DM_Dx_pre_rec)*PRS,
                  family=binomial(link="logit"))
-lr_df = rbind(lr_df,data.frame('Exposure'="Diabetes","P-value"=anova(dm_model,test="Chisq")$`Pr(>Chi)`[10],"Beta"=as.numeric(coef(dm_model))[10]))
+lr_df = rbind(lr_df,data.frame('Exposure'="Diabetes","P-value"=anova(dm_model,test="Chisq")$`Pr(>Chi)`[11],"Beta"=as.numeric(coef(dm_model))[11]))
 
 pud_model = glm(data=selected_vars,
                  PD_Dx_after_rec~+`Age at recruitment.0.0`+
                    `Sex.0.0`+
+                    `Townsend deprivation index at recruitment.0.0`+
                    `Genetic principal components.0.1`+
                    `Genetic principal components.0.2`+
                    `Genetic principal components.0.3`+
                    `Genetic principal components.0.4`+
                    factor(selected_vars$Gastric_ulcer_Dx_pre_rec)*PRS,
                  family=binomial(link="logit"))
-lr_df = rbind(lr_df,data.frame('Exposure'="Gastric Ulcer","P-value"=anova(pud_model,test="Chisq")$`Pr(>Chi)`[10],"Beta"=as.numeric(coef(pud_model))[10]))
+lr_df = rbind(lr_df,data.frame('Exposure'="Gastric Ulcer","P-value"=anova(pud_model,test="Chisq")$`Pr(>Chi)`[11],"Beta"=as.numeric(coef(pud_model))[11]))
 
 menarche_model = glm(data=selected_vars,
                   PD_Dx_after_rec~+`Age at recruitment.0.0`+
+                   `Townsend deprivation index at recruitment.0.0`+
                     `Genetic principal components.0.1`+
                     `Genetic principal components.0.2`+
                     `Genetic principal components.0.3`+
@@ -1312,61 +1797,98 @@ menarche_model = glm(data=selected_vars,
                     `Age when periods started (menarche).0.0`*PRS,
                   family=binomial(link="logit"))
 
-lr_df = rbind(lr_df,data.frame('Exposure'="Menarche","P-value"=anova(menarche_model,test="Chisq")$`Pr(>Chi)`[9],"Beta"=as.numeric(coef(menarche_model))[9]))
+lr_df = rbind(lr_df,data.frame('Exposure'="Menarche","P-value"=anova(menarche_model,test="Chisq")$`Pr(>Chi)`[10],"Beta"=as.numeric(coef(menarche_model))[10]))
 lr_df$FDR = p.adjust(lr_df$P.value,method="fdr")
 lr_df=lr_df %>% select(Exposure,Beta,P.value,FDR)%>%arrange(FDR)
 
 write_csv(lr_df,"multiplicative_int_lik_rats.csv")
 
 
-
-#decile ORs
-library(Hmisc)
-selected_vars$prs_decile = cut2(selected_vars$PRS,g=10)
+# stratified plot
 levels(selected_vars$prs_decile)=c(1:10)
-selected_vars = selected_vars %>% filter(prs_decile %in% c(1,10))
-low = selected_vars %>% filter(prs_decile ==1)
-high = selected_vars %>% filter(prs_decile ==10)
 
-model_low = glm(data=low,
-                PD_Dx_after_rec~`Age at recruitment.0.0`+
-                  `Sex.0.0`+
-                  `Genetic principal components.0.1`+
-                  `Genetic principal components.0.2`+
-                  `Genetic principal components.0.3`+
-                  `Genetic principal components.0.4`+
-                  DM_Dx_pre_rec,
-                family=binomial(link="logit"))
-summary(model_low)
-model_high = glm(data=high,
-                PD_Dx_after_rec~`Age at recruitment.0.0`+
-                  `Sex.0.0`+
-                  `Genetic principal components.0.1`+
-                  `Genetic principal components.0.2`+
-                  `Genetic principal components.0.3`+
-                  `Genetic principal components.0.4`+
-                  DM_Dx_pre_rec,
-                family=binomial(link="logit"))
-summary(model_high)
-model_low = glm(data=low,
-                PD_Dx_after_rec~`Age at recruitment.0.0`+
-                  `Sex.0.0`+
-                  `Genetic principal components.0.1`+
-                  `Genetic principal components.0.2`+
-                  `Genetic principal components.0.3`+
-                  `Genetic principal components.0.4`+
-                  alcohol,
-                family=binomial(link="logit"))
-summary(model_low)
-model_high = glm(data=high,
-                PD_Dx_after_rec~`Age at recruitment.0.0`+
-                  `Sex.0.0`+
-                  `Genetic principal components.0.1`+
-                  `Genetic principal components.0.2`+
-                  `Genetic principal components.0.3`+
-                  `Genetic principal components.0.4`+
-                  alcohol,
-                family=binomial(link="logit"))
-summary(model_high)
-                
-                
+bottom_decile = selected_vars %>% filter(prs_decile==1)
+top_decile = selected_vars %>% filter(prs_decile==10)
+
+bottoms = c()
+bottom_model = function(x){
+model = glm(data=bottom_decile,
+                  PD_Dx_after_rec~+`Age at recruitment.0.0`+
+                  Sex.0.0+
+                   `Townsend deprivation index at recruitment.0.0`+
+                    `Genetic principal components.0.1`+
+                    `Genetic principal components.0.2`+
+                    `Genetic principal components.0.3`+
+                    `Genetic principal components.0.4`+
+                    bottom_decile[[x]],
+                  family=binomial(link="logit"))
+                  
+bottoms <<- rbind(bottoms,c(x,summary(model)$coefficients[9,c(1,2)]))
+}
+
+bottom_model("DM_Dx_pre_rec")
+bottom_model("alcohol")
+bottom_model("Gastric_ulcer_Dx_pre_rec")
+bottom_model("depression_Dx_pre_rec")
+bottom_model("sleepiness")
+bottom_model("epilepsy_Dx_pre_rec")
+bottom_model("smoking_status")
+
+
+
+tops = c()
+top_model = function(x){
+model = glm(data=top_decile,
+                  PD_Dx_after_rec~+`Age at recruitment.0.0`+
+                  Sex.0.0+
+                   `Townsend deprivation index at recruitment.0.0`+
+                    `Genetic principal components.0.1`+
+                    `Genetic principal components.0.2`+
+                    `Genetic principal components.0.3`+
+                    `Genetic principal components.0.4`+
+                    top_decile[[x]],
+                  family=binomial(link="logit"))
+                  
+tops <<- rbind(tops,c(x,summary(model)$coefficients[9,c(1,2)]))
+}
+
+top_model("DM_Dx_pre_rec")
+top_model("alcohol")
+top_model("Gastric_ulcer_Dx_pre_rec")
+top_model("depression_Dx_pre_rec")
+top_model("sleepiness")
+top_model("epilepsy_Dx_pre_rec")
+top_model("smoking_status")
+
+menarche_model = glm(data=top_decile,
+                  PD_Dx_after_rec~+`Age at recruitment.0.0`+
+                   `Townsend deprivation index at recruitment.0.0`+
+                    `Genetic principal components.0.1`+
+                    `Genetic principal components.0.2`+
+                    `Genetic principal components.0.3`+
+                    `Genetic principal components.0.4`+
+                    `Age when periods started (menarche).0.0`,
+                  family=binomial(link="logit"))
+                  
+tops <<- rbind(tops,c("Menarche",summary(menarche_model)$coefficients[8,c(1,2)]))
+
+menarche_model = glm(data=bottom_decile,
+                  PD_Dx_after_rec~+`Age at recruitment.0.0`+
+                   `Townsend deprivation index at recruitment.0.0`+
+                    `Genetic principal components.0.1`+
+                    `Genetic principal components.0.2`+
+                    `Genetic principal components.0.3`+
+                    `Genetic principal components.0.4`+
+                    `Age when periods started (menarche).0.0`,
+                  family=binomial(link="logit"))
+                  
+bottoms <<- rbind(bottoms,c("Menarche",summary(menarche_model)$coefficients[8,c(1,2)]))
+df = bind_rows(data.frame(tops,decile="Top"),data.frame(bottoms,decile="Bottom"))
+
+df$Estimate = as.numeric(df$Estimate)
+df$Std..Error = as.numeric(df$Std..Error)
+
+
+png(file="/data/Wolfson-UKBB-Dobson/PD_pheno/stratified_plot.png",height=8,width=8,res=300,units="in")
+ggplot(df,aes(Estimate,V1,col=decile))+geom_point()+geom_errorbarh(aes(xmin=Estimate-1.96*Std..Error,xmax=Estimate+1.96*Std..Error),height=0.1)+theme_classic()+geom_vline(xintercept=0)+labs(x="Log(OR) for PD",y="Risk factor",col="PRS Decile")+theme(text=element_text(size=16))
+dev.off()
