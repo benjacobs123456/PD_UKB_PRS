@@ -1,6 +1,6 @@
 #!/bin/bash
-#$ -pe smp 16
-#$ -l h_vmem=1G
+#$ -pe smp 1
+#$ -l h_vmem=16G
 #$ -l h_rt=1:0:0
 #$ -cwd
 #$ -j y
