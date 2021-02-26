@@ -17,7 +17,7 @@ cd /data/scratch/hmy117
 
 module load plink/2.0-20170920
 
-for i in 0.00005
+for i in 1 0.8 0.6 0.4 0.2 0.1 0.05 0.005 0.0005 0.00005 0.00000005
 	do
     # print rsids
 		awk '{print $3}' pval$i\_chr${SGE_TASK_ID}\.clumped > pval$i\_chr${SGE_TASK_ID}\_snps
